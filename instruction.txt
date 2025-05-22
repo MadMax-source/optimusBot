@@ -1,0 +1,171 @@
+The bot features will be
+1 Add new password or change old password
+2 Set account confirmation time so I can add myself
+3 There will be a referral system If the account is registered successfully, you will get $0.01
+4 Balance will be added as soon as the account is confirmed
+5 User's balance address will be automatically accepted by TRX trc20
+6 Telegram account will be accepted as a file
+7 Bot's admin funnel will be in Telegram
+8 I can set which countries will be open and which countries will be closed 
+
+
+
+
+To build this Telegram bot with the listed features, you'll need a combination of technologies including:
+
+* **Node.js** (or Python, but Node is great for real-time apps like Telegram bots)
+* **Telegram Bot API**
+* **MongoDB** (or another database) for storing user data, passwords, balances, etc.
+* **Express.js** (optional, for admin panel or webhook)
+* **TRON API (TRC-20)** for handling balance addresses
+* **GeoIP or IP location APIs** for country-based filtering
+* **File storage** (for accepting Telegram accounts as files)
+
+---
+
+### ✅ Here's a breakdown of how you can implement each feature:
+
+---
+
+### 1. **Add/Change Password**
+
+* Add a password field in your MongoDB user schema.
+* Use `/set_password` command.
+* Check if password exists; if yes, change it. If not, create one.
+
+```js
+UserSchema = {
+  telegramId: String,
+  password: String,
+  ...
+}
+```
+
+---
+
+### 2. **Set Account Confirmation Time**
+
+* Add a field `confirmationTime` to the user schema.
+* Use an admin-only command like `/set_confirmation_time <minutes>`
+* Use a job (e.g., [node-cron](https://www.npmjs.com/package/node-cron)) to automatically confirm accounts when time is up.
+
+---
+
+### 3. **Referral System (\$0.01 on Registration)**
+
+* Add `referrerId` to the user model.
+* On `/start <ref_id>`, store the referrer’s Telegram ID.
+* On successful registration, increment referrer’s balance by \$0.01.
+
+---
+
+### 4. **Balance on Confirmation**
+
+* Once `isConfirmed = true`, update balance.
+
+```js
+if (user.isConfirmed && !user.balanceCredited) {
+  user.balance += 0.01;
+  user.balanceCredited = true;
+  await user.save();
+}
+```
+
+---
+
+### 5. **TRX TRC-20 Wallet Integration**
+
+* Use [TronWeb](https://github.com/tronprotocol/tronweb) to:
+
+  * Generate new wallet addresses
+  * Store public/private keys in DB
+  * Use them to track balances via the TRON network
+
+```js
+const TronWeb = require('tronweb');
+const tronWeb = new TronWeb({ ... });
+const newAccount = await tronWeb.createAccount();
+```
+
+---
+
+### 6. **Telegram Account as File**
+
+* Let user upload a `.txt`, `.json`, or `.pdf` file via Telegram.
+* Use `ctx.message.document` or `bot.on('document', ...)` to capture it and store in cloud/local disk.
+
+---
+
+### 7. **Admin Funnel via Telegram**
+
+* Add admin IDs to an env variable or list.
+* Create admin-only commands like `/broadcast`, `/stats`, `/ban_user`, etc.
+
+```js
+const isAdmin = (ctx) => [12345678].includes(ctx.from.id); // Telegram ID
+```
+
+---
+
+### 8. **Country Filter (GeoIP)**
+
+* On first use, fetch user's country via IP-based lookup (if Telegram doesn’t provide).
+* Use libraries like `ipstack`, `ipdata`, or free `geoip-lite`.
+* Block/allow by maintaining a whitelist/blacklist of country codes.
+
+---
+
+### 🔧 Tools and Stack
+
+| Component      | Technology                |
+| -------------- | ------------------------- |
+| Bot Engine     | Node.js + `telegraf`      |
+| Database       | MongoDB                   |
+| Web Wallets    | `tronweb`                 |
+| Scheduler      | `node-cron` or `agenda`   |
+| File Storage   | Local or AWS S3           |
+| Country Filter | `geoip-lite`, `ipdata.co` |
+
+---
+
+### 🗂️ Project Structure Example
+
+```
+bot/
+├── index.js
+├── handlers/
+│   ├── auth.js
+│   ├── referral.js
+│   ├── wallet.js
+│   ├── admin.js
+├── services/
+│   ├── tronService.js
+│   ├── geoService.js
+│   └── fileService.js
+├── models/
+│   └── User.js
+├── jobs/
+│   └── confirmAccounts.js
+├── utils/
+│   └── helpers.js
+.env
+```
+
+---
+
+### 🚀 Step-by-Step Setup Plan
+
+1. **Set up Telegram bot with BotFather**
+2. **Build a basic `telegraf` bot skeleton**
+3. **Connect to MongoDB**
+4. **Implement user registration and password setting**
+5. **Build referral tracking and balance crediting**
+6. **Use `tronweb` for wallet handling**
+7. **Handle file uploads and storage**
+8. **Add country filtering logic**
+9. **Create admin command routes**
+10. **Deploy (e.g., on Railway, Render, VPS)**
+
+---
+
+Would you like me to create a full project boilerplate (folder + starter code) for this setup?
